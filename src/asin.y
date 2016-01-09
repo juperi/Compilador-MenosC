@@ -229,44 +229,51 @@ expresion: expresionLogica	{$$.tipo = $1.tipo; }
             }
         ;
 
-expresionLogica: expresionIgualdad
-        {$$.tipo = $1.tipo;}
+expresionLogica: expresionIgualdad	{$$.tipo = $1.tipo;}
         | expresionLogica operadorLogico expresionIgualdad
-          {$$.tipo = T_ERROR;
+			{
+				$$.tipo = T_ERROR;
 
-           if($1.tipo == T_LOGICO && $3.tipo == T_LOGICO){
-             $$.tipo = $1.tipo;
-           }else{ yyerror("Error en el operador Logico");}
+				if($1.tipo == T_LOGICO && $3.tipo == T_LOGICO){
+             		$$.tipo = $1.tipo;
+           		}else yyerror("Error en el operador Logico");
 
-         }
+         	}
         ;
 
 expresionIgualdad: expresionRelacional
-        {
-          $$.tipo = $1.tipo;
-        }
-	| expresionIgualdad operadorIgualdad expresionRelacional
-      {}
-        ;
+        	{
+				$$.tipo = $1.tipo;
+				$$.pos  = $1.pos;
+        	}
+		| expresionIgualdad operadorIgualdad expresionRelacional
+			{
+			
+			}
+      	;
 
 expresionRelacional: expresionAditiva
-              {
+			{
                 $$.tipo = $1.tipo;
-              }
+				$$.pos  = $1.pos;
+            }
         | expresionRelacional operadorRelacional expresionAditiva
-        {
+	        {
 
-          if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO){
-            yyerror("No se pueden comparar objetos de tipos diferentes");
-            $$.tipo = T_ERROR;
-          }
-          else{$$.tipo = T_LOGICO;}
-        }
+	        	if($1.tipo != T_ENTERO || $3.tipo != T_ENTERO){
+	        		yyerror("No se pueden comparar objetos de tipos diferentes");
+	        	    $$.tipo = T_ERROR;
+	        	  }
+	        	  else $$.tipo = T_LOGICO;
+	        }
 
         ;
 
-expresionAditiva: 
-		  expresionMultiplicativa	{$$.tipo = $1.tipo;}
+expresionAditiva: expresionMultiplicativa	
+			{
+				$$.tipo = $1.tipo;
+				$$.pos = $1.pos;
+			}
         | expresionAditiva operadorAditivo expresionMultiplicativa
 			{
 				if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){ 
@@ -282,37 +289,40 @@ expresionAditiva:
 			}
         ;
 
-expresionMultiplicativa: expresionUnaria
-						{
-                $$.tipo = $1.tipo;
-            }
+expresionMultiplicativa: expresionUnaria	{$$.tipo = $1.tipo;}
         | expresionMultiplicativa operadorMultiplicativo expresionUnaria
-			{if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
-					$$.tipo = T_ENTERO;}
-			else{	yyerror ("Error en expresion multiplicativa");
-              			$$.tipo = T_ERROR;
+			{
+				if ($1.tipo == T_ENTERO && $3.tipo == T_ENTERO){
+					$$.tipo = T_ENTERO;
+					$$.pos = crearVarTemp();
+					emite($2, crArgPos($1.pos), crArgPos($3.pos), crArgPos($$.pos));
+				}
+				else{	
+					yyerror ("Error en expresion multiplicativa");
+	        		$$.tipo = T_ERROR;
 				}
 			}
         ;
 
 expresionUnaria: expresionSufija
-				{
-            $$.tipo = $1.tipo;
-          }
+			{
+            	$$.tipo = $1.tipo;
+				$$.pos = $1.pos;
+        	}
         | operadorUnario expresionUnaria
-          {
-            if($2.tipo != T_LOGICO){
-              $$.tipo = T_ERROR;
-              yyerror("Error en expresionUnaria");
-            }
+        	{
+            	if($2.tipo != T_LOGICO){
+              		$$.tipo = T_ERROR;
+              		yyerror("Error en expresionUnaria");
+            	}
 
-        }
-
-        | operadorIncremento ID_{
-			      SIMB id = obtenerTDS( $2 );
-			      if(id.tipo == T_ENTERO) $$.tipo = T_ENTERO;
-			      else  $$.tipo = T_ERROR;
-		               }
+        	}
+        | operadorIncremento ID_
+			{
+				SIMB id = obtenerTDS( $2 );
+			    if(id.tipo == T_ENTERO) $$.tipo = T_ENTERO;
+			    else  $$.tipo = T_ERROR;
+		    }
         ;
 
 expresionSufija: ID_ CLAUDATOR_AB_ expresion CLAUDATOR_CERR_
